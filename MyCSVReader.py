@@ -186,22 +186,149 @@ class CSVReader:
 
 class Predictor:
     def __init__(self):
+        self.finalTable = []
+        self.finalRows = 0
+        self.coefTable = []
         self.Table = []
         self.TableRows = 0
+        self.totalFiles = 0
+        self.totalFolders = 0
         self.filename = 'C:\\ProgramData\\Sublime Text 3\\moduledata.csv'
+        self.metafilename = 'C:\\ProgramData\\Sublime Text 3\\metadata.txt'
         if (not os.path.isfile(self.filename)):
             if (not os.path.isdir('C:\\ProgramData\\Sublime Text 3\\')):
                 os.makedirs('C:\\ProgramData\\Sublime Text 3\\')
             with open(self.filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(['line', 'total', 'infolders', 'folders'])
+            metafile = open(self.metafilename, 'w')
+            metafile.write('0\n0\n')
         with open(self.filename, newline='') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=';')
             for row in reader:
                 self.Table += [[row['line'], int(row['total']), int(row['infolders']), int(row['folders'])]]
                 self.TableRows += 1
+            with open(self.metafilename) as metafile:
+                lines = metafile.readlines()
+            self.totalFiles = int(lines[0])
+            self.totalFolders = int(lines[1])
+
+    def Ranging(self):
+        self.__featureengineering()
+        self.__coefselection()
+        return self.finalTable
+
+    def __featureengineering(self):
+        for row in self.Table:
+            self.coefTable += [[row[0], row[1]/self.totalFiles, row[3]/self.totalFolders, row[1]/row[2], (1-row[3]/row[1])]]
+        self.Table = []
+
+    def __coefselection(self):
+        check = 0
+        imports = []
+        import_rows = 0
+        for (dirpath, dirnames, filenames) in os.walk(os.getcwd()):
+            for file in filenames:
+                if ((file[-3:] == '.py') and (file != os.path.basename(__file__))):
+                    f = open(dirpath + '\\' + file)
+                    try:
+                        for line1 in f:
+                            line = line1[:-1]
+                            if (line[0:7] == 'import ' or line[0:5] == 'from '):
+                                check = 1
+                                if (imports == []):
+                                    imports = [line]
+                                    import_rows += 1
+                                    continue
+                                l = 0
+                                r = import_rows - 1
+                                m = 0
+                                while (l <= r):
+                                    m = (l + r) // 2
+                                    if (line < imports[m]):
+                                        r = m - 1
+                                    elif (line > imports[m]):
+                                        l = m + 1
+                                    else:
+                                        break
+                                if (l <= r):
+                                    continue
+                                else:
+                                    imports.insert(l, line)
+                                    import_rows += 1
+                    except:
+                        check = 0
+            break
+        if (check):
+            for row in self.coefTable:
+                l = 0
+                r = import_rows - 1
+                m = 0
+                inFolder = False
+                while (l <= r):
+                    m = (l + r) // 2
+                    if (row[0] < imports[m]):
+                        r = m - 1
+                    elif (row[0] > imports[m]):
+                        l = m + 1
+                    else:
+                        inFolder = True
+                        break
+                if (inFolder):
+                    score = (row[1] + row[2] + 6 * row[3] + 2 * row[4]) / 10
+                    if (self.finalTable == []):
+                        self.finalTable = [[row[0], score]]
+                        self.finalRows += 1
+                        continue
+                    l = 0
+                    r = self.finalRows - 1
+                    m = 0
+                    while (l <= r):
+                        m = (l + r) // 2
+                        if (score < self.finalTable[m][1]):
+                            r = m - 1
+                        else:
+                            l = m + 1
+                    self.finalTable.insert(l, [row[0], score])
+                    self.finalRows += 1
+                else:
+                    score = (5 * row[1] + 3 * row[2] + row[3] + row[4]) / 10
+                    if (self.finalTable == []):
+                        self.finalTable = [[row[0], score]]
+                        self.finalRows += 1
+                        continue
+                    l = 0
+                    r = self.finalRows - 1
+                    m = 0
+                    while (l <= r):
+                        m = (l + r) // 2
+                        if (score < self.finalTable[m][1]):
+                            r = m - 1
+                        else:
+                            l = m + 1
+                    self.finalTable.insert(l, [row[0], score])
+                    self.finalRows += 1
+        else:
+            for row in self.coefTable:
+                score = (4 * row[1] + 4 * row[2] + row[3] + row[4]) / 10
+                if (self.finalTable == []):
+                    self.finalTable = [[row[0], score]]
+                    self.finalRows += 1
+                    continue
+                l = 0
+                r = self.finalRows - 1
+                m = 0
+                while (l <= r):
+                    m = (l + r) // 2
+                    if (score < self.finalTable[m][1]):
+                        r = m - 1
+                    else:
+                        l = m + 1
+                self.finalTable.insert(l, [row[0], score])
+                self.finalRows += 1
+        self.coefTable = []
 
 
-a = CSVReader()
-a.ClearCSV()
-a.UpdateCSV('B:\\')
+
+a = Predictor()
+print(a.Ranging())
