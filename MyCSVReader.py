@@ -10,26 +10,31 @@ class TableData:
         if (not os.path.isfile(self.filename)):
             if (not os.path.isdir('C:\\ProgramData\\Sublime Text 3\\')):
                 os.makedirs('C:\\ProgramData\\Sublime Text 3\\')
-            with open(filename, 'w', newline='') as csvfile:
+            with open(self.filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(['line', 'total', 'infolders', 'folders'])
+
+    def UpdateCSV(self, path, recursive=True, hidden=False, venv=False):
+        self.__DataFromCSV()
+        self.__AddToTableFromPath(path, recursive, hidden, venv)
+        self.__CSVFromData()
+
+    def ClearCSV(self):
+        with open(self.filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=';')
+            writer.writerow(['line', 'total', 'infolders', 'folders'])
 
     def printTable(self):
         print(self.Table)
 
-    def DataFromCSV(self):
+    def __DataFromCSV(self):
         with open(self.filename, newline='') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=';')
             for row in reader:
                 self.Table += [[row['line'], int(row['total']), int(row['infolders']), int(row['folders'])]]
                 self.TableRows += 1
 
-    def ClearData(self):
-        with open(self.filename, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=';')
-            writer.writerow(['line', 'total', 'infolders', 'folders'])
-
-    def AddToTableFromPath(self, path, recursive=True, hidden=False, venv=False):
+    def __AddToTableFromPath(self, path, recursive=True, hidden=False, venv=False):
         if (recursive):
             for (dirpath, dirnames, filenames) in os.walk(path):
                 current_data = []
@@ -150,24 +155,10 @@ class TableData:
                         self.TableRows += 1
                 break
 
-    def CSVFromData(self):
+    def __CSVFromData(self):
         with open(self.filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerow(['line', 'total', 'infolders', 'folders'])
             for i in range(self.TableRows):
                 writer.writerow(self.Table[i])
 
-
-filename = r'C:\ProgramData\Sublime Text 3\moduledata.csv'
-a = TableData()
-a.ClearData()
-a.DataFromCSV()
-a.printTable()
-
-t = TableData()
-t.DataFromCSV()
-t.printTable()
-t.AddToTableFromPath('B:\\', True, True, True)
-t.CSVFromData()
-a = 'fsfdf'
-print(a[:-1])
