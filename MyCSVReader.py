@@ -1,5 +1,7 @@
 import csv
 import os
+import sublime
+import sublime_plugin
 
 
 class CSVReader:
@@ -220,7 +222,8 @@ class Predictor:
 
     def __featureengineering(self):
         for row in self.Table:
-            self.coefTable += [[row[0], row[1]/self.totalFiles, row[3]/self.totalFolders, row[1]/row[2], (1-row[3]/row[1])]]
+            self.coefTable += [
+                [row[0], row[1] / self.totalFiles, row[3] / self.totalFolders, row[1] / row[2], (1 - row[3] / row[1])]]
         self.Table = []
 
     def __coefselection(self):
@@ -329,6 +332,62 @@ class Predictor:
         self.coefTable = []
 
 
+class UpdateCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        self.view = None
+        self.input_dir = ''
+        self.recursive = 'yes'
+        self.hidden = 'no'
+        self.venv = 'no'
+        self.window.show_input_panel('Enter directory name', '', self.on_done1, None, None)
 
-a = Predictor()
-print(a.Ranging())
+    def on_done1(self, input_dir):
+        self.input_dir = input_dir
+        self.window.show_input_panel('Recursive?', 'yes', self.on_done2, None, None)
+
+    def on_done2(self, recursive):
+        self.recursive = recursive
+        self.window.show_input_panel('Include hidden folders (starting with .)?', 'no', self.on_done3, None, None)
+
+    def on_done3(self, hidden):
+        self.hidden = hidden
+        self.window.show_input_panel('Include venv folders?', 'no', self.on_done4, None, None)
+
+    def on_done4(self, venv):
+        self.venv = venv
+        a = CSVReader()
+        a.UpdateCSV(self.input_dir, self.recursive == 'yes', self.hidden != 'no', self.venv != 'no')
+        del a
+
+
+class ClearCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        self.answer = 'yes'
+        self.window.show_input_panel('Clear all data?', 'yes', self.on_done, None, None)
+
+    def on_done(self, answer):
+        self.answer = answer
+        if (answer == 'yes'):
+            a = CSVReader()
+            a.ClearCSV()
+            del a
+
+
+class AutoimportCommand(sublime_plugin.WindowCommand):
+    def run(self):
+        self.notfirst = False
+        a = Predictor()
+        self.list_of = a.Ranging()
+        self.list_of = [row[0] for row in self.list_of]
+        self.list_of.reverse()
+        self.window.show_quick_panel(self.list_of, 0, 0, 0, self.on_highlighted)
+
+    def on_highlighted(self, answer):
+        if (self.notfirst):
+            self.window.active_view().run_command('import', {'text': self.list_of[answer]})
+        self.notfirst = True
+
+
+class ImportCommand(sublime_plugin.TextCommand):
+    def run(self, edit, text):
+        self.view.insert(edit, 0, text + '\n')
