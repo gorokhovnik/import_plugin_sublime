@@ -10,11 +10,18 @@ class CSVReader:
         self.TableRows = 0
         self.totalFiles = 0
         self.totalFolders = 0
-        self.filename = 'C:\\ProgramData\\Sublime Text 3\\moduledata.csv'
-        self.metafilename = 'C:\\ProgramData\\Sublime Text 3\\metadata.txt'
+        self.winOS = (os.name == 'nt')
+        if (self.winOS):
+            self.filename = 'C:\\ProgramData\\Sublime Text 3\\moduledata.csv'
+            self.metafilename = 'C:\\ProgramData\\Sublime Text 3\\metadata.txt'
+            self.dirname = 'C:\\ProgramData\\Sublime Text 3'
+        else:
+            self.filename = '/home/' + os.getlogin() + '/.SublimeImportPlugin/moduledata.csv'
+            self.metafilename = '/home/' + os.getlogin() + '/.SublimeImportPlugin/metadata.txt'
+            self.dirname = '/home/' + os.getlogin() + '/.SublimeImportPlugin'
         if (not os.path.isfile(self.filename)):
-            if (not os.path.isdir('C:\\ProgramData\\Sublime Text 3\\')):
-                os.makedirs('C:\\ProgramData\\Sublime Text 3\\')
+            if (not os.path.isdir(self.dirname)):
+                os.makedirs(self.dirname)
             with open(self.filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(['line', 'total', 'infolders', 'folders'])
@@ -31,7 +38,7 @@ class CSVReader:
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerow(['line', 'total', 'infolders', 'folders'])
             metafile = open(self.metafilename, 'w')
-            metafile.write('0\n0')
+            metafile.write('0\n0\n')
 
     def __DataFromCSV(self):
         self.Table = []
@@ -53,10 +60,18 @@ class CSVReader:
                 total = 0
                 checkpy = 0
                 for file in filenames:
-                    if ((file[-3:] == '.py') and (dirpath.find('\\.') == -1 or hidden) and (
-                            (dirpath.find('\\venv\\') == -1 and dirpath[-5:] != '\\venv') or venv)):
+                    if (self.winOS):
+                        condition = ((file[-3:] == '.py') and (dirpath.find('\\.') == -1 or hidden) and (
+                                (dirpath.find('\\venv\\') == -1 and dirpath[-5:] != '\\venv') or venv))
+                    else:
+                        condition = ((file[-3:] == '.py') and (dirpath.find('/.') == -1 or hidden) and (
+                                (dirpath.find('/venv/') == -1 and dirpath[-5:] != '/venv') or venv))
+                    if (condition):
                         checkpy = 1
-                        f = open(dirpath + '\\' + file)
+                        if (self.winOS):
+                            f = open(dirpath + '\\' + file)
+                        else:
+                            f = open(dirpath + '/' + file)
                         total += 1
                         try:
                             for line1 in f:
@@ -117,10 +132,18 @@ class CSVReader:
                 total = 0
                 checkpy = 0
                 for file in filenames:
-                    if ((file[-3:] == '.py') and (dirpath.find('\\.') == -1 or hidden) and (
-                            (dirpath.find('\\venv\\') == -1 and dirpath[-5:] != '\\venv') or venv)):
+                    if (self.winOS):
+                        condition = ((file[-3:] == '.py') and (dirpath.find('\\.') == -1 or hidden) and (
+                                (dirpath.find('\\venv\\') == -1 and dirpath[-5:] != '\\venv') or venv))
+                    else:
+                        condition = ((file[-3:] == '.py') and (dirpath.find('/.') == -1 or hidden) and (
+                                (dirpath.find('/venv/') == -1 and dirpath[-5:] != '/venv') or venv))
+                    if (condition):
                         checkpy = 1
-                        f = open(dirpath + '\\' + file)
+                        if (self.winOS):
+                            f = open(dirpath + '\\' + file)
+                        else:
+                            f = open(dirpath + '/' + file)
                         total += 1
                         try:
                             for line1 in f:
@@ -201,11 +224,18 @@ class Predictor:
         else:
             self.current_file = ''
             self.current_dir = ''
-        self.filename = 'C:\\ProgramData\\Sublime Text 3\\moduledata.csv'
-        self.metafilename = 'C:\\ProgramData\\Sublime Text 3\\metadata.txt'
+        self.winOS = (os.name == 'nt')
+        if (self.winOS):
+            self.filename = 'C:\\ProgramData\\Sublime Text 3\\moduledata.csv'
+            self.metafilename = 'C:\\ProgramData\\Sublime Text 3\\metadata.txt'
+            self.dirname = 'C:\\ProgramData\\Sublime Text 3'
+        else:
+            self.filename = '/home/' + os.getlogin() + '/.SublimeImportPlugin/moduledata.csv'
+            self.metafilename = '/home/' + os.getlogin() + '/.SublimeImportPlugin/metadata.txt'
+            self.dirname = '/home/' + os.getlogin() + '/.SublimeImportPlugin'
         if (not os.path.isfile(self.filename)):
-            if (not os.path.isdir('C:\\ProgramData\\Sublime Text 3\\')):
-                os.makedirs('C:\\ProgramData\\Sublime Text 3\\')
+            if (not os.path.isdir(self.dirname)):
+                os.makedirs(self.dirname)
             with open(self.filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=';')
                 writer.writerow(['line', 'total', 'infolders', 'folders'])
@@ -239,7 +269,10 @@ class Predictor:
         for (dirpath, dirnames, filenames) in os.walk(self.current_dir):
             for file in filenames:
                 if ((file[-3:] == '.py') and (file != self.current_file)):
-                    f = open(dirpath + '\\' + file)
+                    if (self.winOS):
+                        f = open(dirpath + '\\' + file)
+                    else:
+                        f = open(dirpath + '/' + file)
                     try:
                         for line1 in f:
                             line = line1[:-1]
@@ -361,6 +394,7 @@ class UpdateCommand(sublime_plugin.WindowCommand):
 
     def on_done4(self, venv):
         self.venv = venv
+        print(self.input_dir)
         a = CSVReader()
         a.UpdateCSV(self.input_dir, self.recursive == 'yes', self.hidden != 'no', self.venv != 'no')
         del a
