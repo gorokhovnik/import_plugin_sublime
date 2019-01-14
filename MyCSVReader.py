@@ -187,7 +187,7 @@ class CSVReader:
 
 
 class Predictor:
-    def __init__(self):
+    def __init__(self, current_file):
         self.finalTable = []
         self.finalRows = 0
         self.coefTable = []
@@ -195,6 +195,12 @@ class Predictor:
         self.TableRows = 0
         self.totalFiles = 0
         self.totalFolders = 0
+        if (current_file != None):
+            self.current_file = os.path.basename(current_file)
+            self.current_dir = os.path.dirname(current_file)
+        else:
+            self.current_file = ''
+            self.current_dir = ''
         self.filename = 'C:\\ProgramData\\Sublime Text 3\\moduledata.csv'
         self.metafilename = 'C:\\ProgramData\\Sublime Text 3\\metadata.txt'
         if (not os.path.isfile(self.filename)):
@@ -230,9 +236,9 @@ class Predictor:
         check = 0
         imports = []
         import_rows = 0
-        for (dirpath, dirnames, filenames) in os.walk(os.getcwd()):
+        for (dirpath, dirnames, filenames) in os.walk(self.current_dir):
             for file in filenames:
-                if ((file[-3:] == '.py') and (file != os.path.basename(__file__))):
+                if ((file[-3:] == '.py') and (file != self.current_file)):
                     f = open(dirpath + '\\' + file)
                     try:
                         for line1 in f:
@@ -376,7 +382,7 @@ class ClearCommand(sublime_plugin.WindowCommand):
 class AutoimportCommand(sublime_plugin.WindowCommand):
     def run(self):
         self.notfirst = False
-        a = Predictor()
+        a = Predictor(self.window.active_view().file_name())
         self.list_of = a.Ranging()
         self.list_of = [row[0] for row in self.list_of]
         self.list_of.reverse()
