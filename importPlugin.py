@@ -37,8 +37,8 @@ class CSVWriter:
         with open(self.filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=';')
             writer.writerow(['line', 'total', 'infolders', 'folders'])
-            metafile = open(self.metafilename, 'w')
-            metafile.write('0\n0\n')
+        metafile = open(self.metafilename, 'w')
+        metafile.write('0\n0\n')
 
     def __DataFromCSV(self):
         self.Table = []
@@ -318,38 +318,23 @@ class Predictor:
                         break
                 if (inFolder):
                     score = (row[1] + row[2] + 6 * row[3] + 2 * row[4]) / 10
-                    if (self.finalTable == []):
-                        self.finalTable = [[row[0], score]]
-                        self.finalRows += 1
-                        continue
-                    l = 0
-                    r = self.finalRows - 1
-                    m = 0
-                    while (l <= r):
-                        m = (l + r) // 2
-                        if (score < self.finalTable[m][1]):
-                            r = m - 1
-                        else:
-                            l = m + 1
-                    self.finalTable.insert(l, [row[0], score])
-                    self.finalRows += 1
                 else:
                     score = (5 * row[1] + 3 * row[2] + row[3] + row[4]) / 10
-                    if (self.finalTable == []):
-                        self.finalTable = [[row[0], score]]
-                        self.finalRows += 1
-                        continue
-                    l = 0
-                    r = self.finalRows - 1
-                    m = 0
-                    while (l <= r):
-                        m = (l + r) // 2
-                        if (score < self.finalTable[m][1]):
-                            r = m - 1
-                        else:
-                            l = m + 1
-                    self.finalTable.insert(l, [row[0], score])
+                if (self.finalTable == []):
+                    self.finalTable = [[row[0], score]]
                     self.finalRows += 1
+                    continue
+                l = 0
+                r = self.finalRows - 1
+                m = 0
+                while (l <= r):
+                    m = (l + r) // 2
+                    if (score < self.finalTable[m][1]):
+                        r = m - 1
+                    else:
+                        l = m + 1
+                self.finalTable.insert(l, [row[0], score])
+                self.finalRows += 1
         else:
             for row in self.coefTable:
                 score = (4 * row[1] + 4 * row[2] + row[3] + row[4]) / 10

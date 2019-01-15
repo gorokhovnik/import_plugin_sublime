@@ -1,0 +1,14 @@
+[
+{
+"keys": ["ctrl+shift+u"],
+"command": "update"
+},
+{
+"keys": ["ctrl+shift+c"],
+"command": "clear"
+},
+{
+"keys": ["ctrl+shift+a"],
+"command": "autoimport"
+}
+]
