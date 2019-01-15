@@ -4,7 +4,7 @@ import sublime
 import sublime_plugin
 
 
-class CSVReader:
+class CSVWriter:
     def __init__(self):
         self.Table = []
         self.TableRows = 0
@@ -395,7 +395,7 @@ class UpdateCommand(sublime_plugin.WindowCommand):
     def on_done4(self, venv):
         self.venv = venv
         print(self.input_dir)
-        a = CSVReader()
+        a = CSVWriter()
         a.UpdateCSV(self.input_dir, self.recursive == 'yes', self.hidden != 'no', self.venv != 'no')
         del a
 
@@ -408,7 +408,7 @@ class ClearCommand(sublime_plugin.WindowCommand):
     def on_done(self, answer):
         self.answer = answer
         if (answer == 'yes'):
-            a = CSVReader()
+            a = CSVWriter()
             a.ClearCSV()
             del a
 
